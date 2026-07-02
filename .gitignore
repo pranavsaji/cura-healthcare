@@ -1,0 +1,28 @@
+node_modules/
+dist/
+build/
+.next/
+.nx/
+tmp/
+.tmp/
+*.log
+coverage/
+
+# env / secrets — NEVER commit
+.env
+.env.local
+.env.*.local
+credentials.json
+token.json
+
+# os
+.DS_Store
+
+# uploads / PHI (local dev only)
+apps/api/.uploads/
+
+# generated
+*.tsbuildinfo
+playwright-report/
+test-results/
+.eslintcache

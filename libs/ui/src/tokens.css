@@ -1,0 +1,101 @@
+/* ────────────────────────────────────────────────────────────────────
+   Cura design tokens — the single source of truth shared by the
+   marketing site and the product app. "Calm-tech": warm near-black,
+   cream light sections, sage/mint accents, cinematic depth.
+   ──────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Dark surfaces */
+  --bg-900: #0c0d0b;
+  --bg-800: #121311;
+  --bg-700: #1a1c19;
+  --bg-600: #22241f;
+  --line: #2a2c28;
+  --line-strong: #3a3d37;
+
+  /* Light section */
+  --cream-100: #f4f2ec;
+  --cream-200: #eae7de;
+  --ink-900: #14150f;
+  --ink-600: #4b4d43;
+
+  /* Brand / accent */
+  --sage-500: #8fb89b;
+  --mint-400: #a7e8c4;
+  --mint-500: #7fd8ab;
+  --amber-400: #e7b27a;
+  --lime-400: #c7f04a;
+  --danger: #e5776b;
+
+  /* Text on dark */
+  --text-hi: rgba(255, 255, 255, 0.94);
+  --text-mid: rgba(255, 255, 255, 0.66);
+  --text-lo: rgba(255, 255, 255, 0.42);
+
+  /* Radii */
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 22px;
+  --r-xl: 32px;
+  --r-pill: 999px;
+
+  /* Shadows / glow */
+  --shadow-card: 0 20px 60px -20px rgba(0, 0, 0, 0.55);
+  --shadow-glow: 0 0 40px rgba(167, 232, 196, 0.25);
+  --shadow-lift: 0 8px 30px -12px rgba(0, 0, 0, 0.6);
+
+  /* Motion */
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 200ms;
+  --dur-mid: 400ms;
+  --dur-slow: 700ms;
+
+  /* Type */
+  --font-display: "PP Neue Montreal", "Geist", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-text: "Geist", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", ui-monospace, monospace;
+
+  /* Layout */
+  --container: 1240px;
+}
+
+/* Light theme — cream marketing sections. Same token *names*, re-scoped values,
+   so components styled via the Tailwind preset render correctly on light
+   backgrounds without any component-level changes. Apply with
+   `data-theme="light"` on a wrapping element. */
+[data-theme="light"] {
+  --bg-900: var(--cream-100);
+  --bg-800: var(--cream-100);
+  --bg-700: #ffffff;
+  --bg-600: var(--cream-200);
+  --line: #dcd8cd;
+  --line-strong: #c7c2b3;
+
+  --text-hi: rgba(20, 21, 15, 0.94);
+  --text-mid: rgba(20, 21, 15, 0.66);
+  --text-lo: rgba(20, 21, 15, 0.45);
+
+  --shadow-card: 0 20px 60px -24px rgba(20, 21, 15, 0.18);
+  --shadow-glow: 0 0 32px rgba(127, 216, 171, 0.35);
+}
+
+/* Subtle film-grain overlay you can drop onto any dark hero.
+   Usage: add class "grain" to a positioned element. */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

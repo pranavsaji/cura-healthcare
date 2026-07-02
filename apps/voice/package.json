@@ -1,0 +1,26 @@
+{
+  "name": "@cura/voice-app",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --root ../.. apps/voice"
+  },
+  "dependencies": {
+    "@cura/agents": "workspace:*",
+    "@cura/audit": "workspace:*",
+    "@cura/benefits": "workspace:*",
+    "@cura/core": "workspace:*",
+    "@cura/llm": "workspace:*",
+    "@cura/scheduling": "workspace:*",
+    "@cura/shared": "workspace:*",
+    "@cura/telephony": "workspace:*",
+    "@cura/transcription": "workspace:*",
+    "@cura/voice": "workspace:*",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": { "@types/node": "^22.10.5", "tsx": "^4.19.2" }
+}

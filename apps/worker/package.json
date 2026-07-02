@@ -1,0 +1,24 @@
+{
+  "name": "@cura/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --root ../.. apps/worker"
+  },
+  "dependencies": {
+    "@cura/agents": "workspace:*",
+    "@cura/audit": "workspace:*",
+    "@cura/core": "workspace:*",
+    "@cura/ehr": "workspace:*",
+    "@cura/rcm": "workspace:*",
+    "@cura/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "tsx": "^4.19.2"
+  }
+}

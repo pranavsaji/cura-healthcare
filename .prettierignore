@@ -1,0 +1,8 @@
+node_modules
+dist
+build
+.next
+.nx
+coverage
+libs/db/drizzle
+pnpm-lock.yaml

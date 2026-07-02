@@ -1,0 +1,19 @@
+"use client";
+
+export function Marquee({ items }: { items: string[] }) {
+  const doubled = [...items, ...items];
+  return (
+    <div className="relative overflow-hidden py-4 [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
+      <div className="flex w-max animate-marquee gap-3">
+        {doubled.map((item, i) => (
+          <span
+            key={i}
+            className="whitespace-nowrap rounded-pill border border-line bg-bg-800 px-4 py-2 text-sm text-text-hi"
+          >
+            {item}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,29 @@
+# Example edge WAF + rate-limit policy (Phase 16). Adapt to your provider
+# (AWS WAF, Cloudflare, etc.). App-layer rate limiting is also enforced in
+# apps/api/src/plugins/rate-limit.ts as defense-in-depth.
+web_acl:
+  name: cura-api-waf
+  default_action: allow
+  managed_rule_groups:
+    - AWSManagedRulesCommonRuleSet          # OWASP top-10 style
+    - AWSManagedRulesKnownBadInputsRuleSet
+    - AWSManagedRulesAmazonIpReputationList
+    - AWSManagedRulesBotControlRuleSet
+  custom_rules:
+    - name: global-rate-limit
+      action: block
+      rate_based:
+        limit: 2000            # requests per 5 min per IP
+        aggregate_key: ip
+    - name: auth-brute-force
+      action: block
+      scope: "/auth/*"
+      rate_based:
+        limit: 50              # per 5 min per IP on auth routes
+        aggregate_key: ip
+    - name: block-non-tls
+      action: block
+      condition: "http.request.scheme != https"
+  logging:
+    destination: cloudwatch     # never log request bodies (PHI); headers redacted
+    redact_fields: [authorization, cookie]

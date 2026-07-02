@@ -1,0 +1,29 @@
+# OWASP ZAP baseline scan config (Phase 16, DAST).
+# Run against a staging deployment in CI:
+#   docker run -t ghcr.io/zaproxy/zaproxy:stable zap-baseline.py \
+#     -t https://staging.api.heycura.com -c test/security/zap-baseline.yaml -I
+#
+# The API returns JSON only and sends a strict header set (see
+# apps/api/src/plugins/security.ts), so most passive alerts should be absent.
+# Rules below are tuned: FAIL on real issues, IGNORE framework noise.
+---
+rules:
+  # Fail the build on these (real risks):
+  - id: 10202 # Absence of Anti-CSRF Tokens
+    action: WARN # API uses bearer tokens + same-origin cookie gate (see security.ts)
+  - id: 10038 # Content Security Policy (CSP) Header Not Set
+    action: FAIL
+  - id: 10035 # Strict-Transport-Security Header Not Set
+    action: FAIL
+  - id: 10021 # X-Content-Type-Options Header Missing
+    action: FAIL
+  - id: 10020 # X-Frame-Options Header
+    action: FAIL
+  - id: 90004 # Insufficient Site Isolation Against Spectre
+    action: FAIL
+
+  # Ignore (JSON API, not an HTML app):
+  - id: 10096 # Timestamp Disclosure
+    action: IGNORE
+  - id: 10109 # Modern Web Application
+    action: IGNORE
