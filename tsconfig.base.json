@@ -18,6 +18,7 @@
       "@cura/shared": ["libs/shared/src/index.ts"],
       "@cura/db": ["libs/db/src/index.ts"],
       "@cura/ui": ["libs/ui/src/index.ts"],
+      "@cura/ui/three": ["libs/ui/src/three/index.ts"],
       "@cura/ui/tokens.css": ["libs/ui/src/tokens.css"]
     }
   },

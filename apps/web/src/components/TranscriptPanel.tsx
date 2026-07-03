@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
-import { Button, Eyebrow, cn } from "@cura/ui";
+import { motion } from "framer-motion";
+import { Button, Eyebrow, cn, LiveWaveform, springs, type AudioSignal } from "@cura/ui";
 import type { TranscriptSegment } from "@cura/shared";
 import type { Phase } from "../useSession.js";
 
@@ -13,6 +14,7 @@ export function TranscriptPanel({
   phase,
   segments,
   partial,
+  signal,
   onPlayDemo,
   onSay,
   onStop,
@@ -20,6 +22,7 @@ export function TranscriptPanel({
   phase: Phase;
   segments: TranscriptSegment[];
   partial: { text: string; speaker: string } | null;
+  signal?: AudioSignal;
   onPlayDemo: () => void;
   onSay: (text: string, speaker: "clinician" | "client") => void;
   onStop: () => void;
@@ -37,7 +40,13 @@ export function TranscriptPanel({
         <Eyebrow>Live transcript</Eyebrow>
         {recording && (
           <span className="flex items-center gap-2 text-xs text-mint-400">
-            <span className="h-2 w-2 animate-pulse-glow rounded-full bg-mint-400" />
+            {signal ? (
+              <span className="h-4 w-24">
+                <LiveWaveform signal={signal} bars={28} />
+              </span>
+            ) : (
+              <span className="h-2 w-2 animate-pulse-glow rounded-full bg-mint-400" />
+            )}
             Capturing
           </span>
         )}
@@ -50,7 +59,14 @@ export function TranscriptPanel({
           </p>
         )}
         {segments.map((seg, i) => (
-          <Line key={i} seg={seg} />
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 8, filter: "blur(6px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={springs.smooth}
+          >
+            <Line seg={seg} />
+          </motion.div>
         ))}
         {partial && (
           <div className={cn("opacity-60", partial.speaker === "clinician" ? "text-sage-500" : "text-text-hi")}>

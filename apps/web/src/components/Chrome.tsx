@@ -1,4 +1,5 @@
-import { StatusChip } from "@cura/ui";
+import { motion } from "framer-motion";
+import { StatusChip, springs } from "@cura/ui";
 import type { Phase } from "../useSession.js";
 
 export function Logo() {
@@ -30,9 +31,24 @@ export function PipelineRail({ phase }: { phase: Phase }) {
         const passed = order.indexOf(step.key) < idx;
         const tone = active ? (step.key === "recording" ? "live" : "processing") : passed ? "done" : "standby";
         return (
-          <StatusChip key={step.key} tone={tone as never}>
-            {step.label}
-          </StatusChip>
+          <motion.div
+            key={step.key}
+            layout
+            className="relative"
+            animate={{ scale: active ? 1.06 : 1, opacity: active || passed ? 1 : 0.6 }}
+            transition={springs.snappy}
+          >
+            {/* traveling comet halo under the active step */}
+            {active && (
+              <motion.span
+                layoutId="pipeline-comet"
+                aria-hidden="true"
+                className="absolute -inset-1 -z-10 rounded-pill bg-mint-400/20 blur-md"
+                transition={springs.smooth}
+              />
+            )}
+            <StatusChip tone={tone as never}>{step.label}</StatusChip>
+          </motion.div>
         );
       })}
     </div>

@@ -3,3 +3,6 @@
    Only modules that actually pull in `three` live here; the cheap capability
    gates + fallback are exported from the package root instead. */
 export { Canvas3D } from "./Canvas3D.js";
+export { MeshGradientBackdrop, type MeshGradientColors } from "./MeshGradientBackdrop.js";
+export { RecordOrbScene, type OrbPhase } from "./RecordOrb.js";
+export { ParticleFlowScene } from "./ParticleFlow.js";

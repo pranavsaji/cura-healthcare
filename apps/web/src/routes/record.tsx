@@ -1,10 +1,11 @@
-import { Button, Eyebrow } from "@cura/ui";
+import { Button, Eyebrow, useAudioAnalyser } from "@cura/ui";
 import { useTemplates } from "../state/queries.js";
 import { useSession } from "../useSession.js";
 import { PipelineRail } from "../components/Chrome.js";
 import { SetupCard } from "../components/SetupCard.js";
 import { TranscriptPanel } from "../components/TranscriptPanel.js";
 import { NoteEditor } from "../components/NoteEditor.js";
+import { OrbStage } from "../components/OrbStage.js";
 
 /**
  * The capture flow: consent → live transcript → the note writing itself. Real
@@ -14,6 +15,9 @@ import { NoteEditor } from "../components/NoteEditor.js";
 export function RecordRoute() {
   const { data: templates } = useTemplates();
   const { state, start, say, playDemo, stop, reset } = useSession();
+  // One shared audio signal drives both the orb and the transcript waveform.
+  // No mic stream yet (Phase 07) → synthetic "breathing" while capturing.
+  const signal = useAudioAnalyser(null, state.phase === "recording" || state.phase === "writing");
 
   const format =
     templates?.find((t) => t.id === (state.note?.templateId ?? ""))?.format ??
@@ -31,13 +35,23 @@ export function RecordRoute() {
       </div>
 
       {state.phase === "idle" ? (
-        <SetupCard templates={templates ?? []} onStart={(label, tid) => start(label, tid)} />
+        <div className="grid grid-cols-1 items-center gap-6 lg:grid-cols-[1fr_minmax(0,320px)]">
+          <SetupCard templates={templates ?? []} onStart={(label, tid) => start(label, tid)} />
+          <div className="hidden lg:block">
+            <OrbStage phase={state.phase} signal={signal} />
+            <p className="mt-2 text-center text-xs text-text-lo">Ready when you are</p>
+          </div>
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          <div className="lg:col-span-2 flex justify-center">
+            <OrbStage phase={state.phase} signal={signal} />
+          </div>
           <TranscriptPanel
             phase={state.phase}
             segments={state.segments}
             partial={state.partial}
+            signal={signal}
             onPlayDemo={playDemo}
             onSay={say}
             onStop={stop}

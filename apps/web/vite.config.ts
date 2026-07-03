@@ -13,6 +13,10 @@ export default defineConfig({
         replacement: fileURLToPath(new URL("../../libs/ui/src/tokens.css", import.meta.url)),
       },
       {
+        find: "@cura/ui/three",
+        replacement: fileURLToPath(new URL("../../libs/ui/src/three/index.ts", import.meta.url)),
+      },
+      {
         find: "@cura/shared",
         replacement: fileURLToPath(new URL("../../libs/shared/src/index.ts", import.meta.url)),
       },

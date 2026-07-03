@@ -1,6 +1,6 @@
 "use client";
 
-import { type ElementType, type ReactNode } from "react";
+import { createElement, type ElementType, type ReactNode } from "react";
 import { useInViewReveal } from "@cura/ui";
 
 /**
@@ -21,14 +21,16 @@ export function Reveal({
   delayMs?: number;
 }) {
   const { ref, inView } = useInViewReveal<HTMLElement>();
-  return (
-    <Tag
-      ref={ref}
-      data-reveal={inView ? "in" : "out"}
-      className={`reveal ${inView ? "reveal-in" : "reveal-out"} ${className}`}
-      style={{ transitionDelay: `${delayMs}ms` }}
-    >
-      {children}
-    </Tag>
+  // createElement (not JSX) so a generic ElementType tag type-checks even when
+  // libraries augment the global JSX.IntrinsicElements (e.g. react-three-fiber).
+  return createElement(
+    Tag,
+    {
+      ref,
+      "data-reveal": inView ? "in" : "out",
+      className: `reveal ${inView ? "reveal-in" : "reveal-out"} ${className}`,
+      style: { transitionDelay: `${delayMs}ms` },
+    },
+    children,
   );
 }

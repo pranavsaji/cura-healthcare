@@ -1,6 +1,7 @@
-import { NavLink, Outlet } from "react-router-dom";
-import { Button } from "@cura/ui";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { Button, PageTransition, Magnetic } from "@cura/ui";
 import { Logo } from "../components/Chrome.js";
+import { Backdrop } from "../components/Backdrop.js";
 import { useAuth } from "../state/auth.js";
 
 /**
@@ -22,8 +23,10 @@ const NAV: { to: string; label: string; permission?: string }[] = [
 
 export function AppShell() {
   const { identity, logout, has } = useAuth();
+  const location = useLocation();
   return (
     <div className="flex min-h-screen flex-col">
+      <Backdrop />
       <header className="sticky top-0 z-20 border-b border-line bg-bg-900/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-container items-center justify-between px-6">
           <div className="flex items-center gap-8">
@@ -45,14 +48,18 @@ export function AppShell() {
           </div>
           <div className="flex items-center gap-3">
             {identity && <span className="hidden text-sm text-text-mid sm:inline">{identity.role}</span>}
-            <Button variant="outline" onClick={() => void logout()}>
-              Sign out
-            </Button>
+            <Magnetic strength={0.25}>
+              <Button variant="outline" onClick={() => void logout()}>
+                Sign out
+              </Button>
+            </Magnetic>
           </div>
         </div>
       </header>
       <main className="mx-auto w-full max-w-container flex-1 px-6 py-6">
-        <Outlet />
+        <PageTransition id={location.pathname}>
+          <Outlet />
+        </PageTransition>
       </main>
     </div>
   );

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { FlowLine } from "@/components/FlowLine";
 import { Marquee } from "@/components/Marquee";
 import { Reveal } from "@/components/Reveal";
+import { HeroScene } from "@/components/HeroScene";
+import { TiltCard } from "@/components/TiltCard";
 import { Eyebrow } from "@/components/ui";
 import { COMPLIANCE, EHRS, MODALITIES, PRODUCTS, CURA_LOOP } from "@/lib/site";
 
@@ -19,27 +21,33 @@ export default function Home() {
     <main>
       {/* Hero */}
       <section className="hero-wash grain relative overflow-hidden">
-        <div className="mx-auto max-w-container px-6 pb-24 pt-44">
-          <Eyebrow>The AI operations team for behavioral health</Eyebrow>
-          <h1 className="mt-6 max-w-4xl font-display text-6xl font-light leading-[1.05] tracking-tight text-text-hi md:text-7xl">
-            Ambient agents for behavioral health operations
-          </h1>
-          <p className="mt-6 max-w-xl text-lg text-text-mid">
-            Specialized AI agents that run front-desk, documentation, and RCM operations —
-            inside your existing software stack.
-          </p>
-          <div className="mt-10 flex flex-wrap items-center gap-4">
-            <Link href="/book-a-demo" className="rounded-pill bg-mint-400 px-6 py-3 text-sm font-medium text-ink-900 shadow-glow hover:bg-mint-500">
-              Request demo →
-            </Link>
-            <a href="#products" className="text-sm text-text-mid underline-offset-4 hover:text-text-hi hover:underline">
-              See the platform
-            </a>
+        <div className="mx-auto grid max-w-container items-center gap-8 px-6 pb-24 pt-44 lg:grid-cols-[1.1fr_0.9fr]">
+          <div>
+            <Eyebrow>The AI operations team for behavioral health</Eyebrow>
+            <h1 className="mt-6 max-w-4xl font-display text-6xl font-light leading-[1.05] tracking-tight text-text-hi md:text-7xl">
+              Ambient agents for behavioral health operations
+            </h1>
+            <p className="mt-6 max-w-xl text-lg text-text-mid">
+              Specialized AI agents that run front-desk, documentation, and RCM operations —
+              inside your existing software stack.
+            </p>
+            <div className="mt-10 flex flex-wrap items-center gap-4">
+              <Link href="/book-a-demo" className="rounded-pill bg-mint-400 px-6 py-3 text-sm font-medium text-ink-900 shadow-glow transition-transform hover:-translate-y-0.5 hover:bg-mint-500">
+                Request demo →
+              </Link>
+              <a href="#products" className="text-sm text-text-mid underline-offset-4 hover:text-text-hi hover:underline">
+                See the platform
+              </a>
+            </div>
+            <div className="mt-20 flex items-center gap-12">
+              <Stat value="6,000+" label="Clinics" />
+              <Stat value="30+" label="States" />
+              <Stat value="Enterprise" label="Grade security" />
+            </div>
           </div>
-          <div className="mt-20 flex items-center gap-12">
-            <Stat value="6,000+" label="Clinics" />
-            <Stat value="30+" label="States" />
-            <Stat value="Enterprise" label="Grade security" />
+          {/* Signature 3D hero scene — gated + client-only inside HeroScene */}
+          <div className="relative mx-auto hidden aspect-square w-full max-w-[520px] lg:block">
+            <HeroScene />
           </div>
         </div>
       </section>
@@ -83,7 +91,7 @@ export default function Home() {
                 </Link>
               </div>
               <div className={i % 2 ? "md:order-1" : ""}>
-                <div className="relative aspect-[4/3] overflow-hidden rounded-lg border border-line bg-gradient-to-br from-bg-700 to-bg-900 p-6 shadow-card">
+                <TiltCard className="relative aspect-[4/3] overflow-hidden rounded-lg border border-line bg-gradient-to-br from-bg-700 to-bg-900 p-6 shadow-card">
                   <span className={`inline-flex items-center gap-2 rounded-pill border border-line bg-bg-800/80 px-3 py-1 text-[11px] uppercase tracking-wider ${p.tone}`}>
                     <span className="h-1.5 w-1.5 animate-pulse-glow rounded-full bg-current" />
                     {p.chip}
@@ -93,7 +101,7 @@ export default function Home() {
                       <div key={j} className="h-2.5 rounded bg-white/5" style={{ width: `${w}%` }} />
                     ))}
                   </div>
-                </div>
+                </TiltCard>
               </div>
             </div>
           </Reveal>

@@ -23,6 +23,9 @@
       "@cura/ui": [
         "../../libs/ui/src/index.ts"
       ],
+      "@cura/ui/three": [
+        "../../libs/ui/src/three/index.ts"
+      ],
       "@cura/ui/tokens.css": [
         "../../libs/ui/src/tokens.css"
       ],
