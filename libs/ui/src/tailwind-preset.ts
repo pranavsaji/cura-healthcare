@@ -60,11 +60,37 @@ const preset: Partial<Config> = {
           "0%,100%": { opacity: "0.6" },
           "50%": { opacity: "1" },
         },
+        float: {
+          "0%,100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-8px)" },
+        },
+        breathe: {
+          "0%,100%": { transform: "scale(1)", opacity: "0.85" },
+          "50%": { transform: "scale(1.04)", opacity: "1" },
+        },
+        sheen: {
+          "0%": { transform: "translateX(-120%) skewX(-12deg)" },
+          "100%": { transform: "translateX(220%) skewX(-12deg)" },
+        },
+        shimmer: {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
+        comet: {
+          "0%": { transform: "translateX(0)", opacity: "0" },
+          "10%,90%": { opacity: "1" },
+          "100%": { transform: "translateX(var(--comet-travel, 100%))", opacity: "0" },
+        },
       },
       animation: {
         "blur-in": "blur-in 0.7s var(--ease-expo) both",
         marquee: "marquee 40s linear infinite",
         "pulse-glow": "pulse_glow 2s ease-in-out infinite",
+        float: "float 6s ease-in-out infinite",
+        breathe: "breathe 4s ease-in-out infinite",
+        sheen: "sheen 2.5s var(--ease-expo) infinite",
+        shimmer: "shimmer 2.2s linear infinite",
+        comet: "comet 2.4s var(--ease-expo) infinite",
       },
     },
   },

@@ -5,7 +5,7 @@ export function Logo() {
   return (
     <div className="flex items-center gap-2 font-display text-lg tracking-tight text-text-hi">
       <span className="grid h-6 w-6 place-items-center rounded-md bg-mint-400 text-ink-900">
-        <span className="text-sm font-semibold">S</span>
+        <span className="text-sm font-semibold">C</span>
       </span>
       <span>
         cura<span className="text-text-lo">note</span>
