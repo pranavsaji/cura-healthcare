@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { Eyebrow, StatusChip } from "@cura/ui";
+import { Eyebrow, StatusChip, MotionList, MotionItem } from "@cura/ui";
 import { useAudit, useAuditVerify } from "../state/queries.js";
 
 /**
@@ -43,9 +43,9 @@ export function AuditRoute() {
       {isLoading ? (
         <p className="text-sm text-text-lo">Loading audit events…</p>
       ) : (
-        <ul className="divide-y divide-line rounded-lg border border-line" aria-label="Audit events">
+        <MotionList className="divide-y divide-line rounded-lg border border-line" ariaLabel="Audit events">
           {(data?.events ?? []).map((e) => (
-            <li key={e.id} className="flex items-center justify-between gap-4 px-5 py-3">
+            <MotionItem key={e.id} className="flex items-center justify-between gap-4 px-5 py-3 transition-colors hover:bg-bg-700/30">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-sm">
                   <span className="font-medium text-text-hi">{e.action}</span>
@@ -56,10 +56,10 @@ export function AuditRoute() {
                 </div>
               </div>
               <time className="shrink-0 text-xs text-text-lo">{new Date(e.createdAt).toLocaleTimeString()}</time>
-            </li>
+            </MotionItem>
           ))}
           {(data?.events?.length ?? 0) === 0 && <li className="px-5 py-6 text-center text-sm text-text-lo">No matching events.</li>}
-        </ul>
+        </MotionList>
       )}
     </div>
   );

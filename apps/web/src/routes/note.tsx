@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { Eyebrow } from "@cura/ui";
+import { Eyebrow, MotionReveal } from "@cura/ui";
 import { useNote } from "../state/queries.js";
 import { NoteEditor } from "../components/NoteEditor.js";
 
@@ -14,7 +14,7 @@ export function NoteRoute() {
   return (
     <div className="space-y-4">
       <Eyebrow>Progress note · {note.format}</Eyebrow>
-      <div className="max-w-2xl">
+      <MotionReveal className="max-w-2xl">
         <NoteEditor
           phase="ready"
           noteId={note.id}
@@ -22,7 +22,7 @@ export function NoteRoute() {
           sections={note.sections}
           risks={note.riskFlags}
         />
-      </div>
+      </MotionReveal>
     </div>
   );
 }

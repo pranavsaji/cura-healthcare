@@ -1,4 +1,4 @@
-import { Eyebrow, StatusChip } from "@cura/ui";
+import { Eyebrow, StatusChip, MotionList, MotionItem } from "@cura/ui";
 import { useSessions } from "../state/queries.js";
 
 /** All sessions for the org, tenant-scoped by the API session. */
@@ -19,18 +19,18 @@ export function SessionsRoute() {
               <th className="py-2">Created</th>
             </tr>
           </thead>
-          <tbody>
+          <MotionList as="tbody">
             {(sessions ?? []).map((s) => (
-              <tr key={s.id} className="border-b border-line/60">
+              <MotionItem as="tr" key={s.id} className="border-b border-line/60 transition-colors hover:bg-bg-700/30">
                 <td className="py-2 text-text-hi">{s.clientLabel}</td>
                 <td className="py-2 text-text-mid">{s.source}</td>
                 <td className="py-2">
                   <StatusChip tone={s.status === "noted" ? "done" : "waiting"}>{s.status}</StatusChip>
                 </td>
                 <td className="py-2 text-text-lo">{new Date(s.createdAt).toLocaleDateString()}</td>
-              </tr>
+              </MotionItem>
             ))}
-          </tbody>
+          </MotionList>
         </table>
       )}
     </div>

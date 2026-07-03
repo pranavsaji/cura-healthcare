@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Eyebrow, StatusChip } from "@cura/ui";
+import { Eyebrow, StatusChip, MotionList, MotionItem } from "@cura/ui";
 
 /**
  * Phase 17 — Curadesk front-desk console: call log, referral pipeline, and
@@ -100,9 +100,9 @@ export function FrontdeskRoute({ calls = DEMO_CALLS }: { calls?: FrontdeskCall[]
         </select>
       </div>
 
-      <ul className="divide-y divide-line rounded-lg border border-line" aria-label="Call log">
+      <MotionList className="divide-y divide-line rounded-lg border border-line" ariaLabel="Call log">
         {shown.map((c) => (
-          <li key={c.id} className="flex items-center justify-between gap-4 px-5 py-3">
+          <MotionItem key={c.id} className="flex items-center justify-between gap-4 px-5 py-3 transition-colors hover:bg-bg-700/30">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm">
                 <span className="font-medium text-text-hi">{c.from}</span>
@@ -124,10 +124,10 @@ export function FrontdeskRoute({ calls = DEMO_CALLS }: { calls?: FrontdeskCall[]
               </div>
             </div>
             <time className="shrink-0 text-xs text-text-lo">{new Date(c.receivedAt).toLocaleTimeString()}</time>
-          </li>
+          </MotionItem>
         ))}
         {shown.length === 0 && <li className="px-5 py-6 text-center text-sm text-text-lo">No calls match.</li>}
-      </ul>
+      </MotionList>
     </div>
   );
 }

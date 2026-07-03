@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Eyebrow, StatusChip } from "@cura/ui";
+import { Eyebrow, StatusChip, MotionList, MotionItem, Magnetic } from "@cura/ui";
 
 /**
  * Phase 18 — Curabill billing console: claims, denials, follow-ups, and the
@@ -75,21 +75,23 @@ export function BillingRoute({ claims: initial = DEMO_CLAIMS }: { claims?: Billi
                 <span className="text-text-hi">
                   Submit {c.id} → {c.payer} ({dollars(c.amountCents)})
                 </span>
-                <button
-                  onClick={() => approve(c.id)}
-                  className="rounded-md bg-mint-400 px-3 py-1 text-xs font-medium text-ink-900 hover:bg-mint-500"
-                >
-                  Approve &amp; submit
-                </button>
+                <Magnetic strength={0.2}>
+                  <button
+                    onClick={() => approve(c.id)}
+                    className="rounded-md bg-mint-400 px-3 py-1 text-xs font-medium text-ink-900 transition-transform hover:-translate-y-0.5 hover:bg-mint-500"
+                  >
+                    Approve &amp; submit
+                  </button>
+                </Magnetic>
               </li>
             ))}
           </ul>
         </section>
       )}
 
-      <ul className="divide-y divide-line rounded-lg border border-line" aria-label="Claims">
+      <MotionList className="divide-y divide-line rounded-lg border border-line" ariaLabel="Claims">
         {claims.map((c) => (
-          <li key={c.id} className="flex items-center justify-between gap-4 px-5 py-3">
+          <MotionItem key={c.id} className="flex items-center justify-between gap-4 px-5 py-3 transition-colors hover:bg-bg-700/30">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm">
                 <span className="font-medium text-text-hi">{c.id}</span>
@@ -100,9 +102,9 @@ export function BillingRoute({ claims: initial = DEMO_CLAIMS }: { claims?: Billi
                 {c.carc && ` · CARC ${c.carc}${c.reason ? ` — ${c.reason}` : ""}`}
               </div>
             </div>
-          </li>
+          </MotionItem>
         ))}
-      </ul>
+      </MotionList>
 
       {denials.length > 0 && (
         <section aria-label="Denials" className="rounded-lg border border-line p-4">

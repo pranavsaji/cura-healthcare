@@ -75,6 +75,71 @@ export function MotionStagger({
   );
 }
 
+/* ── MotionList / MotionItem: reduced-motion-safe stagger for real lists ──
+   Unlike MotionStagger these render as the actual semantic element (ul, ol,
+   tbody, tr, li…) so they can wrap tables and lists without invalid nesting. */
+type ListTag = "ul" | "ol" | "div" | "tbody" | "dl";
+type ItemTag = "li" | "tr" | "div";
+
+export function MotionList({
+  as = "ul",
+  children,
+  className,
+  ariaLabel,
+  stagger = 0.05,
+}: {
+  as?: ListTag;
+  children: ReactNode;
+  className?: string;
+  ariaLabel?: string;
+  stagger?: number;
+}) {
+  const reduced = useReducedMotion();
+  if (reduced) {
+    const Static = as;
+    return (
+      <Static className={className} aria-label={ariaLabel}>
+        {children}
+      </Static>
+    );
+  }
+  const Comp = motion[as];
+  return (
+    <Comp
+      className={className}
+      aria-label={ariaLabel}
+      variants={staggerContainer(stagger)}
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, margin: "-8% 0px" }}
+    >
+      {children}
+    </Comp>
+  );
+}
+
+export function MotionItem({
+  as = "li",
+  children,
+  className,
+}: {
+  as?: ItemTag;
+  children: ReactNode;
+  className?: string;
+}) {
+  const reduced = useReducedMotion();
+  if (reduced) {
+    const Static = as;
+    return <Static className={className}>{children}</Static>;
+  }
+  const Comp = motion[as];
+  return (
+    <Comp className={className} variants={reveal}>
+      {children}
+    </Comp>
+  );
+}
+
 /* ── Tilt: pointer-driven CSS 3D perspective, spring-damped ───────────── */
 export function Tilt({
   children,

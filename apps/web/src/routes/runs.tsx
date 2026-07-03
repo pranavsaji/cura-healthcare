@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { Eyebrow, StatusChip } from "@cura/ui";
+import { Eyebrow, StatusChip, MotionList, MotionItem } from "@cura/ui";
 import { useRun } from "../state/queries.js";
 
 /**
@@ -21,9 +21,9 @@ export function RunsRoute() {
       {isLoading ? (
         <p className="text-sm text-text-lo">Loading run…</p>
       ) : (
-        <ol className="relative space-y-4 border-l border-line pl-6" aria-label="Run steps">
+        <MotionList as="ol" className="relative space-y-4 border-l border-line pl-6" ariaLabel="Run steps">
           {(data?.steps ?? []).map((step, i) => (
-            <li key={step.id} className="relative">
+            <MotionItem key={step.id} className="relative">
               <span className="absolute -left-[29px] grid h-5 w-5 place-items-center rounded-full border border-line bg-bg-800 text-[10px] text-text-lo">
                 {i + 1}
               </span>
@@ -41,10 +41,10 @@ export function RunsRoute() {
                   </pre>
                 )}
               </div>
-            </li>
+            </MotionItem>
           ))}
           {(data?.steps?.length ?? 0) === 0 && <li className="text-sm text-text-lo">No steps recorded for this resource.</li>}
-        </ol>
+        </MotionList>
       )}
     </div>
   );
