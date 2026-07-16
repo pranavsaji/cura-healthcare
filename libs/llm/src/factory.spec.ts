@@ -22,4 +22,17 @@ describe("createLlm", () => {
     expect(llm.name).toBe("gateway:anthropic");
     expect(llm.model).toBe("claude-sonnet-5");
   });
+
+  it("falls back to mock (and reports) when deepseek has no key", () => {
+    const onFallback = vi.fn();
+    const llm = createLlm({ provider: "deepseek" }, { onFallback });
+    expect(llm.name).toBe("gateway:mock");
+    expect(onFallback).toHaveBeenCalledOnce();
+  });
+
+  it("builds the deepseek provider when keyed", () => {
+    const llm = createLlm({ provider: "deepseek", apiKey: "k", model: "deepseek-chat" });
+    expect(llm.name).toBe("gateway:deepseek");
+    expect(llm.model).toBe("deepseek-chat");
+  });
 });

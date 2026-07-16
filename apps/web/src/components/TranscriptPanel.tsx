@@ -15,6 +15,10 @@ export function TranscriptPanel({
   segments,
   partial,
   signal,
+  micOn = false,
+  asrMode = null,
+  micError = null,
+  onToggleMic,
   onPlayDemo,
   onSay,
   onStop,
@@ -23,6 +27,10 @@ export function TranscriptPanel({
   segments: TranscriptSegment[];
   partial: { text: string; speaker: string } | null;
   signal?: AudioSignal;
+  micOn?: boolean;
+  asrMode?: string | null;
+  micError?: string | null;
+  onToggleMic?: () => void;
   onPlayDemo: () => void;
   onSay: (text: string, speaker: "clinician" | "client") => void;
   onStop: () => void;
@@ -80,6 +88,11 @@ export function TranscriptPanel({
       {recording && (
         <div className="space-y-3 border-t border-line px-5 py-4">
           <div className="flex flex-wrap gap-2">
+            {onToggleMic && (
+              <Button variant={micOn ? "primary" : "outline"} onClick={onToggleMic}>
+                {micOn ? "● Stop mic" : "🎙 Use microphone"}
+              </Button>
+            )}
             <Button variant="outline" onClick={onPlayDemo}>
               ▶ Play demo session
             </Button>
@@ -90,6 +103,12 @@ export function TranscriptPanel({
               + client line
             </Button>
           </div>
+          {micOn && asrMode === "mock" && (
+            <p className="text-xs text-text-lo">
+              On-device dictation (no server ASR key) — lines appear as clinician.
+            </p>
+          )}
+          {micError && <p className="text-xs text-danger">{micError}</p>}
           <Button className="w-full" onClick={onStop}>
             ■ End session & write note
           </Button>

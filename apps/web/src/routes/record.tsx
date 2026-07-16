@@ -9,15 +9,16 @@ import { OrbStage } from "../components/OrbStage.js";
 
 /**
  * The capture flow: consent → live transcript → the note writing itself. Real
- * mic capture streams over the WS (Phase 07); the "Play demo session" path keeps
- * the whole pipeline usable with no microphone and no API keys (used by the e2e).
+ * mic capture streams PCM16 over the WS (server ASR) or dictates on-device via
+ * Web Speech when the server is keyless; the "Play demo session" path keeps the
+ * whole pipeline usable with no microphone and no API keys (used by the e2e).
  */
 export function RecordRoute() {
   const { data: templates } = useTemplates();
-  const { state, start, say, playDemo, stop, reset } = useSession();
-  // One shared audio signal drives both the orb and the transcript waveform.
-  // No mic stream yet (Phase 07) → synthetic "breathing" while capturing.
-  const signal = useAudioAnalyser(null, state.phase === "recording" || state.phase === "writing");
+  const { state, start, say, playDemo, stop, reset, toggleMic } = useSession();
+  // One shared audio signal drives both the orb and the transcript waveform:
+  // the live mic stream when capturing, synthetic "breathing" otherwise.
+  const signal = useAudioAnalyser(state.micStream, state.phase === "recording" || state.phase === "writing");
 
   const format =
     templates?.find((t) => t.id === (state.note?.templateId ?? ""))?.format ??
@@ -52,6 +53,10 @@ export function RecordRoute() {
             segments={state.segments}
             partial={state.partial}
             signal={signal}
+            micOn={state.micOn}
+            asrMode={state.asrMode}
+            micError={state.micError}
+            onToggleMic={() => void toggleMic()}
             onPlayDemo={playDemo}
             onSay={say}
             onStop={stop}

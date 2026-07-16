@@ -1,60 +1,47 @@
-import type { TranscriptSegment } from "@cura/shared";
+import { createAsrProvider, type AsrProvider } from "@cura/transcription";
+import type { AsrCallbacks, AsrOptions, AsrStream } from "@cura/transcription";
 import { env } from "../env.js";
 
 /**
- * Streaming ASR provider abstraction. The mock lets the whole capture→transcript
- * loop work offline (driven by "simulate" WS messages). Real providers
- * (Deepgram / AssemblyAI) implement the same push/close contract.
+ * Streaming ASR for live capture, delegated to `@cura/transcription` — the one
+ * provider abstraction (mock/Deepgram/AssemblyAI) also used by the batch re-pass
+ * (CONVENTIONS §2). The mock is the keyless fallback: it ignores raw audio and
+ * relies on `pushText` (the "simulate"/dictation WS path) so the whole pipeline
+ * stays demoable offline. With a Deepgram/AssemblyAI key, `pushAudio` streams
+ * browser PCM16@16k straight to the vendor and real segments come back.
  */
-export interface AsrStream {
-  /** Feed raw audio bytes (PCM16). */
-  pushAudio(chunk: Buffer): void;
-  /** Feed a text line directly (dev/mock + dictation fallback). */
-  pushText(text: string, speaker?: "clinician" | "client"): void;
-  close(): void;
+
+export type { AsrCallbacks, AsrStream } from "@cura/transcription";
+
+let providerSingleton: AsrProvider | undefined;
+
+function provider(): AsrProvider {
+  if (!providerSingleton) {
+    const apiKey =
+      env.asrProvider === "deepgram"
+        ? env.deepgramApiKey
+        : env.asrProvider === "assemblyai"
+          ? env.assemblyaiApiKey
+          : "";
+    providerSingleton = createAsrProvider(
+      { provider: env.asrProvider, apiKey: apiKey || undefined },
+      { onFallback: (reason) => console.warn(`[asr] ${reason}`) },
+    );
+  }
+  return providerSingleton;
 }
 
-export interface AsrCallbacks {
-  onPartial: (text: string, speaker: TranscriptSegment["speaker"]) => void;
-  onSegment: (seg: TranscriptSegment) => void;
+/** Test seam: override the provider (mirrors notegen's __setNoteEngine). */
+export function __setAsrProvider(p: AsrProvider | undefined): void {
+  providerSingleton = p;
 }
 
-class MockAsrStream implements AsrStream {
-  private t = 0;
-  constructor(private cb: AsrCallbacks) {}
-
-  pushAudio(_chunk: Buffer): void {
-    // A real provider would transcribe audio here. The mock ignores raw audio
-    // and relies on pushText() so the pipeline is demoable without a mic/key.
-  }
-
-  pushText(text: string, speaker: "clinician" | "client" = "client"): void {
-    // Emit a quick "partial" then a finalized segment with timing + confidence.
-    this.cb.onPartial(text, speaker);
-    const words = Math.max(1, text.split(/\s+/).length);
-    const start = this.t;
-    const end = this.t + words * 0.4; // ~0.4s/word
-    this.t = end + 0.3;
-    this.cb.onSegment({
-      speaker,
-      start: Number(start.toFixed(2)),
-      end: Number(end.toFixed(2)),
-      text: text.trim(),
-      confidence: 0.9,
-    });
-  }
-
-  close(): void {}
+/** Effective provider name after key-fallback ("mock" when keyless) — advertised
+ * to the client in the `ready` frame so it can pick mic streaming vs dictation. */
+export function asrName(): string {
+  return provider().name;
 }
 
-export function createAsrStream(cb: AsrCallbacks): AsrStream {
-  switch (env.asrProvider) {
-    case "deepgram":
-    case "assemblyai":
-      // TODO: wire the real streaming SDK (BAA required). Falls back to mock
-      // until an API key is present so dev never breaks.
-      return new MockAsrStream(cb);
-    default:
-      return new MockAsrStream(cb);
-  }
+export function createAsrStream(cb: AsrCallbacks, options: AsrOptions = {}): AsrStream {
+  return provider().openStream(cb, { sampleRate: 16000, diarize: true, ...options });
 }

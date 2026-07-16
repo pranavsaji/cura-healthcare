@@ -18,6 +18,8 @@ export const MODEL_PRICING: Record<string, ModelPrice> = {
   "claude-opus-4-8": { inputPerM: 15, outputPerM: 75 },
   "claude-sonnet-5": { inputPerM: 3, outputPerM: 15 },
   "claude-haiku-4-5": { inputPerM: 0.8, outputPerM: 4 },
+  "deepseek-chat": { inputPerM: 0.28, outputPerM: 0.42 },
+  "deepseek-reasoner": { inputPerM: 0.28, outputPerM: 0.42 },
   mock: { inputPerM: 0, outputPerM: 0 },
 };
 

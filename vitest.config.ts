@@ -15,6 +15,20 @@ export default defineConfig({
     // Browser-facing packages opt into jsdom via a per-file docblock
     // (`@vitest-environment jsdom`); the default stays node for speed.
     setupFiles: ["./vitest.setup.ts"],
+    // Vitest auto-loads the repo `.env`; once it holds real provider keys, the
+    // suite would flip to live ASR/LLM providers and hit the network. Pin the
+    // test process to the mock providers with no keys so runs are deterministic
+    // regardless of local `.env`. Specs that exercise provider selection still
+    // override these on `process.env` at runtime.
+    env: {
+      ASR_PROVIDER: "mock",
+      LLM_PROVIDER: "mock",
+      DEEPGRAM_API_KEY: "",
+      ASSEMBLYAI_API_KEY: "",
+      ASR_API_KEY: "",
+      DEEPSEEK_API_KEY: "",
+      ANTHROPIC_API_KEY: "",
+    },
     include: [
       "libs/**/*.spec.ts",
       "libs/**/*.spec.tsx",

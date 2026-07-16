@@ -25,14 +25,31 @@ describe("loadConfig", () => {
     }
   });
 
-  it("requires a provider key when the provider is not mock", () => {
+  it("allows a keyless real provider in dev (factories degrade to mock)", () => {
+    expect(() => loadConfig({ ...MIN_ENV, LLM_PROVIDER: "anthropic" })).not.toThrow();
+    expect(() => loadConfig({ ...MIN_ENV, LLM_PROVIDER: "deepseek" })).not.toThrow();
+    expect(() => loadConfig({ ...MIN_ENV, ASR_PROVIDER: "deepgram" })).not.toThrow();
+  });
+
+  it("requires a provider key in production when the provider is not mock", () => {
+    const PROD_ENV = {
+      ...MIN_ENV,
+      NODE_ENV: "production",
+      DATABASE_URL: "postgres://u:p@localhost:5432/db",
+      SESSION_SECRET: "prod-session-secret-32-chars-min!",
+    };
     try {
-      loadConfig({ ...MIN_ENV, LLM_PROVIDER: "anthropic" });
+      loadConfig({ ...PROD_ENV, LLM_PROVIDER: "deepseek" });
       expect.unreachable("should have thrown");
     } catch (e) {
       const err = e as ConfigError;
-      expect(err.issues.some((i) => i.startsWith("ANTHROPIC_API_KEY"))).toBe(true);
+      expect(err.issues.some((i) => i.startsWith("DEEPSEEK_API_KEY"))).toBe(true);
     }
+    // Provider-named ASR key satisfies the requirement (heals the .env.example name).
+    expect(() =>
+      loadConfig({ ...PROD_ENV, ASR_PROVIDER: "deepgram", DEEPGRAM_API_KEY: "dg-key" }),
+    ).not.toThrow();
+    expect(() => loadConfig({ ...PROD_ENV, ASR_PROVIDER: "deepgram" })).toThrow(ConfigError);
   });
 
   it("requires DATABASE_URL and SESSION_SECRET in production", () => {
@@ -65,10 +82,11 @@ describe("loadConfig", () => {
 
 describe("redactConfig", () => {
   it("never exposes secret values", () => {
-    const c = loadConfig({ ...MIN_ENV, ANTHROPIC_API_KEY: "sk-secret" });
+    const c = loadConfig({ ...MIN_ENV, ANTHROPIC_API_KEY: "sk-secret", DEEPSEEK_API_KEY: "sk-ds-secret" });
     const red = redactConfig(c);
     expect(red.ENCRYPTION_KEY).toBe("[redacted]");
     expect(red.ANTHROPIC_API_KEY).toBe("[redacted]");
+    expect(red.DEEPSEEK_API_KEY).toBe("[redacted]");
     expect(red.API_PORT).toBe(4100);
     expect(JSON.stringify(red)).not.toContain("0123456789abcdef");
   });

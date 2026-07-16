@@ -31,9 +31,12 @@ const ConfigSchema = z
     // Providers — swappable, mock by default (CONVENTIONS §2).
     ASR_PROVIDER: z.enum(["mock", "deepgram", "assemblyai"]).default("mock"),
     ASR_API_KEY: z.string().optional(),
-    LLM_PROVIDER: z.enum(["mock", "anthropic"]).default("mock"),
+    DEEPGRAM_API_KEY: z.string().optional(),
+    ASSEMBLYAI_API_KEY: z.string().optional(),
+    LLM_PROVIDER: z.enum(["mock", "anthropic", "deepseek"]).default("mock"),
     LLM_MODEL: z.string().default("claude-opus-4-8"),
     ANTHROPIC_API_KEY: z.string().optional(),
+    DEEPSEEK_API_KEY: z.string().optional(),
     STORAGE_PROVIDER: z.enum(["mock", "s3"]).default("mock"),
     AUTH_PROVIDER: z.enum(["mock", "workos"]).default("mock"),
     WORKOS_API_KEY: z.string().optional(),
@@ -54,20 +57,29 @@ const ConfigSchema = z
     // Feature flags (comma-separated list of enabled flag names)
     FEATURE_FLAGS: z.string().default(""),
   })
-  // Cross-field rules: a real provider needs its credential.
+  // Cross-field rules: a real provider needs its credential. Provider keys are
+  // enforced only in production: dev/CI boot keyless and the ASR/LLM factories
+  // degrade to the mock (logging the downgrade), so a real-provider default in
+  // .env never bricks a keyless machine. Production keeps fail-fast.
   .superRefine((c, ctx) => {
     const requireKey = (cond: boolean, path: string, msg: string) => {
       if (cond) ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message: msg });
     };
+    const prod = c.NODE_ENV === "production";
+    const asrKey =
+      c.ASR_PROVIDER === "deepgram"
+        ? c.DEEPGRAM_API_KEY ?? c.ASR_API_KEY
+        : c.ASSEMBLYAI_API_KEY ?? c.ASR_API_KEY;
     requireKey(
-      c.ASR_PROVIDER !== "mock" && !c.ASR_API_KEY,
+      prod && c.ASR_PROVIDER !== "mock" && !asrKey,
       "ASR_API_KEY",
-      `ASR_API_KEY is required when ASR_PROVIDER="${c.ASR_PROVIDER}"`,
+      `an ASR API key is required when ASR_PROVIDER="${c.ASR_PROVIDER}"`,
     );
+    const llmKey = c.LLM_PROVIDER === "deepseek" ? c.DEEPSEEK_API_KEY : c.ANTHROPIC_API_KEY;
     requireKey(
-      c.LLM_PROVIDER === "anthropic" && !c.ANTHROPIC_API_KEY,
-      "ANTHROPIC_API_KEY",
-      'ANTHROPIC_API_KEY is required when LLM_PROVIDER="anthropic"',
+      prod && c.LLM_PROVIDER !== "mock" && !llmKey,
+      c.LLM_PROVIDER === "deepseek" ? "DEEPSEEK_API_KEY" : "ANTHROPIC_API_KEY",
+      `an LLM API key is required when LLM_PROVIDER="${c.LLM_PROVIDER}"`,
     );
     requireKey(
       c.AUTH_PROVIDER === "workos" && !c.WORKOS_API_KEY,
@@ -97,7 +109,10 @@ export type Config = z.infer<typeof ConfigSchema>;
 const SECRET_KEYS = new Set([
   "ENCRYPTION_KEY",
   "ASR_API_KEY",
+  "DEEPGRAM_API_KEY",
+  "ASSEMBLYAI_API_KEY",
   "ANTHROPIC_API_KEY",
+  "DEEPSEEK_API_KEY",
   "WORKOS_API_KEY",
   "SESSION_SECRET",
   "DATABASE_URL",

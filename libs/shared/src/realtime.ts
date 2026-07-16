@@ -19,7 +19,10 @@ export type ClientMessage = z.infer<typeof ClientMessage>;
 
 // ── Server → Client ──────────────────────────────────────────────────
 export const ServerMessage = z.discriminatedUnion("type", [
-  z.object({ type: z.literal("ready"), sessionId: z.string() }),
+  // `asr` advertises the effective server ASR ("mock" | "deepgram" | ...) so the
+  // client can choose mic streaming vs on-device dictation. Optional for
+  // backward compatibility with older frames.
+  z.object({ type: z.literal("ready"), sessionId: z.string(), asr: z.string().optional() }),
   z.object({ type: z.literal("partial"), text: z.string(), speaker: z.enum(["clinician", "client", "unknown"]) }),
   z.object({ type: z.literal("segment"), segment: TranscriptSegment }),
   z.object({ type: z.literal("note.status"), status: z.enum(["queued", "generating", "done", "error"]) }),

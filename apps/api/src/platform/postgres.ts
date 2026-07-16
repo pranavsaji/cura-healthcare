@@ -61,7 +61,15 @@ export async function createPostgresPlatform(config: Config): Promise<Platform> 
       : createObjectStore({ provider: "local", root: ".tmp/recordings" });
   const scribe = createScribeServices({
     asr: createAsrProvider(
-      { provider: config.ASR_PROVIDER, apiKey: config.ASR_API_KEY, vocabulary: [] },
+      {
+        provider: config.ASR_PROVIDER,
+        // Provider-named keys (.env.example) win; ASR_API_KEY is the generic fallback.
+        apiKey:
+          (config.ASR_PROVIDER === "deepgram"
+            ? config.DEEPGRAM_API_KEY
+            : config.ASSEMBLYAI_API_KEY) ?? config.ASR_API_KEY,
+        vocabulary: [],
+      },
       { onFallback: (reason) => logger.warn({ reason }, "asr provider fell back to mock") },
     ),
     objectStore,

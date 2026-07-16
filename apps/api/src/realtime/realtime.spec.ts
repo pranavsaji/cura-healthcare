@@ -176,6 +176,9 @@ describe("realtime handler pipeline", () => {
 
     await handle(conn, { type: "start", sessionId: session.id });
     expect(socket.typesSent()).toContain("ready");
+    // The ready frame advertises the effective ASR so the client can pick
+    // mic streaming (real provider) vs on-device dictation (mock).
+    expect(socket.sent.find((m) => m.type === "ready")).toMatchObject({ asr: "mock" });
     expect((await store.getSession(session.id))?.status).toBe("recording");
 
     await handle(conn, { type: "simulate", text: "I feel anxious lately.", speaker: "client" });
@@ -192,6 +195,23 @@ describe("realtime handler pipeline", () => {
     expect(types).toContain("note.done");
     expect((await store.getNoteBySession(session.id))?.status).toBe("draft");
 
+    await conn.close();
+  });
+
+  it("flushes in-flight segment writes before generating the note", async () => {
+    const { store, conn, handle } = setup();
+    const session = await store.createSession({ clientLabel: "Flush", source: "live" });
+    await store.updateSession(session.id, { consentAt: new Date().toISOString() });
+    await handle(conn, { type: "start", sessionId: session.id });
+
+    // Simulate lines then stop IMMEDIATELY (no flush) — a real ASR delivers
+    // trailing segments asynchronously; stop must await their persists.
+    await handle(conn, { type: "simulate", text: "First line.", speaker: "client" });
+    await handle(conn, { type: "simulate", text: "Trailing line.", speaker: "clinician" });
+    await handle(conn, { type: "stop" });
+
+    expect(await store.getTranscript(session.id)).toHaveLength(2);
+    expect((await store.getNoteBySession(session.id))?.status).toBe("draft");
     await conn.close();
   });
 

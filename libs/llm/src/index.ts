@@ -5,5 +5,6 @@ export * from "./registry.js";
 export * from "./prompts/index.js";
 export * from "./mock.js";
 export * from "./anthropic.js";
+export * from "./deepseek.js";
 export * from "./gateway.js";
 export * from "./factory.js";

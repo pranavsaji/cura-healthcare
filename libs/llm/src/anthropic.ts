@@ -10,6 +10,7 @@ import {
   validateStructured,
 } from "./guardrails.js";
 import { zodToJsonSchema } from "./schema.js";
+import { parseSseJson } from "./sse.js";
 import type {
   GenOptions,
   GenStructuredResult,
@@ -244,7 +245,7 @@ export class AnthropicProvider implements LlmProvider {
     let outputTokens = 0;
     let stopReason: string | undefined;
 
-    for await (const event of parseSse(res.body)) {
+    for await (const event of parseSseJson<SseEvent>(res.body)) {
       if (event.type === "content_block_delta" && event.delta?.type === "text_delta" && event.delta.text) {
         text += event.delta.text;
         options.onToken?.(event.delta.text);
@@ -304,31 +305,6 @@ interface SseEvent {
   delta?: { type?: string; text?: string; stop_reason?: string };
   usage?: { output_tokens?: number };
   message?: { usage?: { input_tokens?: number } };
-}
-
-/** Parse an Anthropic SSE stream body into typed events. */
-async function* parseSse(body: ReadableStream<Uint8Array>): AsyncGenerator<SseEvent> {
-  const reader = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const chunks = buffer.split("\n\n");
-    buffer = chunks.pop() ?? "";
-    for (const chunk of chunks) {
-      const dataLine = chunk.split("\n").find((l) => l.startsWith("data:"));
-      if (!dataLine) continue;
-      const json = dataLine.slice(5).trim();
-      if (!json || json === "[DONE]") continue;
-      try {
-        yield JSON.parse(json) as SseEvent;
-      } catch {
-        /* skip malformed keep-alive lines */
-      }
-    }
-  }
 }
 
 // Wall-clock for latency only (never used for logic/ids) — safe to use Date here.

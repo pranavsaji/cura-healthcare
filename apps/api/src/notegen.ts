@@ -9,19 +9,23 @@ import type { Store } from "./store/index.js";
  * generation via `@cura/notes` on top of the `@cura/llm` gateway — no more demo
  * heuristics. The provider is selected by env (`LLM_PROVIDER`); with no key it
  * transparently degrades to the deterministic mock so dev/CI never break and no
- * PHI reaches Anthropic before a BAA (CONVENTIONS §2/§6).
+ * PHI reaches a subprocessor (Anthropic/DeepSeek) before a BAA/DPA
+ * (CONVENTIONS §2/§6).
  */
+
+/** The key matching the selected provider — factory falls back to mock without it. */
+const llmApiKey = env.llmProvider === "deepseek" ? env.deepseekApiKey : env.anthropicApiKey;
 
 /** The LLM verification pass only runs on a real provider (the mock would
  * synthesize spurious risk flags from its schema — never enable it for mock). */
-const realProvider = env.llmProvider === "anthropic" && env.anthropicApiKey.length > 0;
+const realProvider = env.llmProvider !== "mock" && llmApiKey.length > 0;
 
 let engineSingleton: NoteEngine | undefined;
 function engine(): NoteEngine {
   if (!engineSingleton) {
     const llm: LlmProvider = createLlm({
       provider: env.llmProvider,
-      apiKey: env.anthropicApiKey || undefined,
+      apiKey: llmApiKey || undefined,
       model: env.llmModel,
     });
     engineSingleton = new NoteEngine(llm);

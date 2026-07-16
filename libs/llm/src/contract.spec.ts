@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { LlmProvider } from "./types.js";
 import { MockLlmProvider } from "./mock.js";
 import { AnthropicProvider } from "./anthropic.js";
+import { DeepSeekProvider } from "./deepseek.js";
 
 /**
  * The LLM provider CONTRACT. Mock and real (Claude) must both satisfy it so they
@@ -52,4 +53,9 @@ describe("LLM contract — mock", () => {
 const KEY = process.env.ANTHROPIC_API_KEY;
 describe.skipIf(!KEY)("LLM contract — anthropic (keyed)", () => {
   runLlmContract(() => new AnthropicProvider({ apiKey: KEY! }));
+});
+
+const DS_KEY = process.env.DEEPSEEK_API_KEY;
+describe.skipIf(!DS_KEY)("LLM contract — deepseek (keyed)", () => {
+  runLlmContract(() => new DeepSeekProvider({ apiKey: DS_KEY! }));
 });

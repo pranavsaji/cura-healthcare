@@ -42,6 +42,9 @@ export class Connection {
   sessionId: string | null = null;
   /** Live ASR stream for the current session (owned by handlers). */
   asr: AsrStream | null = null;
+  /** Chain of in-flight segment persists — awaited by `stop` so note-gen never
+   * reads a transcript missing trailing segments a real ASR flushed late. */
+  pendingWrites: Promise<void> = Promise.resolve();
 
   readonly stats = { sent: 0, droppedPartials: 0 };
 
@@ -125,6 +128,14 @@ export class Connection {
     return this.queue;
   }
 
+  /** Track an in-flight write; failures never break the chain. */
+  trackWrite(p: Promise<unknown>): void {
+    this.pendingWrites = this.pendingWrites.then(
+      () => p.then(() => undefined, () => undefined),
+      () => undefined,
+    );
+  }
+
   /** Record inbound activity (resets the idle timeout). */
   markActivity(): void {
     this.lastActivity = this.now();
@@ -169,7 +180,7 @@ export class Connection {
     if (this.closed) return;
     this.closed = true;
     if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
-    this.asr?.close();
+    void this.asr?.close();
     if (this.subscription) {
       await this.subscription.unsubscribe().catch(() => undefined);
       this.subscription = null;

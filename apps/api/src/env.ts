@@ -12,8 +12,12 @@ export const env = {
   webOrigin: process.env.WEB_ORIGIN ?? "http://localhost:5173",
   databaseUrl: process.env.DATABASE_URL ?? "",
   asrProvider: (process.env.ASR_PROVIDER ?? "mock") as "mock" | "deepgram" | "assemblyai",
-  llmProvider: (process.env.LLM_PROVIDER ?? "mock") as "mock" | "anthropic",
+  // Provider-named keys (.env.example) win; ASR_API_KEY is the generic fallback.
+  deepgramApiKey: process.env.DEEPGRAM_API_KEY ?? process.env.ASR_API_KEY ?? "",
+  assemblyaiApiKey: process.env.ASSEMBLYAI_API_KEY ?? process.env.ASR_API_KEY ?? "",
+  llmProvider: (process.env.LLM_PROVIDER ?? "mock") as "mock" | "anthropic" | "deepseek",
   anthropicApiKey: process.env.ANTHROPIC_API_KEY ?? "",
+  deepseekApiKey: process.env.DEEPSEEK_API_KEY ?? "",
   llmModel: process.env.LLM_MODEL ?? "claude-opus-4-8",
   // Telemetry exporter: "none" (default, zero overhead) | "memory" | "otlp".
   otelExporter: (process.env.OTEL_EXPORTER ?? "none") as "none" | "memory" | "otlp",

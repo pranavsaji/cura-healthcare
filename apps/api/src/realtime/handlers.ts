@@ -2,7 +2,7 @@ import type { AuditLog } from "@cura/audit";
 import type { Store } from "@cura/db";
 import type { ClientMessage } from "@cura/shared";
 import { generateNoteForSession } from "../notegen.js";
-import { createAsrStream } from "../providers/asr.js";
+import { asrName, createAsrStream } from "../providers/asr.js";
 import type { Connection } from "./connection.js";
 
 /**
@@ -81,9 +81,16 @@ async function start(deps: HandlerDeps, conn: Connection, sessionId: string): Pr
       void conn.publish({ type: "partial", text, speaker });
     },
     onSegment: (segment) => {
-      void store.appendSegment(sessionId, segment).then(() =>
-        conn.publish({ type: "segment", segment }),
+      // Tracked so `stop` can await all persists before generating the note —
+      // real ASR flushes trailing segments asynchronously on close.
+      conn.trackWrite(
+        store.appendSegment(sessionId, segment).then(() =>
+          conn.publish({ type: "segment", segment }),
+        ),
       );
+    },
+    onError: () => {
+      conn.send({ type: "error", message: "transcription error" });
     },
   });
 
@@ -95,14 +102,18 @@ async function start(deps: HandlerDeps, conn: Connection, sessionId: string): Pr
     phiTouched: false,
   });
 
-  conn.send({ type: "ready", sessionId });
+  conn.send({ type: "ready", sessionId, asr: asrName() });
 }
 
 async function stop(deps: HandlerDeps, conn: Connection): Promise<void> {
   const sessionId = conn.sessionId;
   if (!sessionId) return;
-  conn.asr?.close();
+  // Flush before generating: a real ASR delivers its final segments during
+  // close(), and their persists ride pendingWrites — skipping either await
+  // silently truncates the tail of the transcript.
+  await conn.asr?.close();
   conn.asr = null;
+  await conn.pendingWrites;
 
   const store = await deps.storeFor(conn.ctx);
   await store.updateSession(sessionId, {

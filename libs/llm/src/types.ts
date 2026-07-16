@@ -3,9 +3,10 @@ import type { z } from "zod";
 /**
  * The one LLM interface used by note-gen (Phase 11) AND future agents
  * (Curadesk/Curabill). Apps/services depend on this — never on the Anthropic SDK
- * directly (CONVENTIONS §2). Providers: `mock` (deterministic, offline) and
- * `anthropic` (Claude Messages API). Every call returns {@link Usage} for
- * reproducibility + cost/audit (Phase 14).
+ * directly (CONVENTIONS §2). Providers: `mock` (deterministic, offline),
+ * `anthropic` (Claude Messages API), and `deepseek` (OpenAI-compatible Chat
+ * Completions). Every call returns {@link Usage} for reproducibility +
+ * cost/audit (Phase 14).
  */
 
 /** Token/cost/latency accounting attached to every generation. Never holds PHI. */
@@ -83,7 +84,7 @@ export interface LlmProvider {
 
 /** Selection + credentials for {@link createLlm}. */
 export interface LlmConfig {
-  provider: "mock" | "anthropic";
+  provider: "mock" | "anthropic" | "deepseek";
   apiKey?: string | undefined;
   model?: string | undefined;
   /** Retry attempts for transient provider failures (gateway). Default 3. */
