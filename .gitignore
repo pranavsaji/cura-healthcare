@@ -26,3 +26,6 @@ apps/api/.uploads/
 playwright-report/
 test-results/
 .eslintcache
+
+# vercel
+.vercel
