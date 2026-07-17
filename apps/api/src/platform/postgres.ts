@@ -48,6 +48,7 @@ export async function createPostgresPlatform(config: Config): Promise<Platform> 
     repos,
     provider,
     secureCookies: config.NODE_ENV === "production",
+    sameSite: config.CROSS_SITE_COOKIES ? "none" : "lax",
   });
 
   const audit: AuditLog = createAuditLog({ store: repos.audit });
@@ -101,6 +102,9 @@ export async function createPostgresPlatform(config: Config): Promise<Platform> 
     rateLimitPerMin: config.RATE_LIMIT_PER_MIN,
     secureCookies: config.NODE_ENV === "production",
     sessionCookieName: auth.sessions.cookieName,
+    // The SSO callback lands on the API (this service), so WorkOS must redirect
+    // here — not at the web origin. Sourced from WORKOS_REDIRECT_URI.
+    authCallbackUrl: config.WORKOS_REDIRECT_URI,
   };
 
   return {
@@ -152,9 +156,12 @@ function buildProvider(config: Config, repos: Repositories): AuthProvider {
     },
   };
   return new WorkOSAuthProvider({
-    port: new HttpWorkOSPort(config.WORKOS_API_KEY),
+    port: new HttpWorkOSPort(config.WORKOS_API_KEY, config.WORKOS_CLIENT_ID),
     directory,
     clientId: config.WORKOS_CLIENT_ID,
+    // AuthKit email/password users carry no WorkOS org — place them in the
+    // seeded org so a fresh deployment has a usable tenant out of the box.
+    defaultOrgId: SEED_IDS.org,
     async resolveOrgId(workosOrgId) {
       const org = await repos.orgs.byWorkosOrgId(workosOrgId);
       return org?.id ?? null;

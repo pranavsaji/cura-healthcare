@@ -39,10 +39,10 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       throw new ForbiddenError("SSO is not configured");
     }
     const state = `s_${app.platform.settings.nodeEnv}_${Date.now()}`;
-    const url = auth.provider.authorizationUrl({
-      state,
-      redirectUri: `${settings.webOrigin}/auth/callback`,
-    });
+    // WorkOS exchanges the code against this API's /auth/callback, so the
+    // redirect target is the API origin (authCallbackUrl), not the web origin.
+    const redirectUri = settings.authCallbackUrl ?? `${settings.webOrigin}/auth/callback`;
+    const url = auth.provider.authorizationUrl({ state, redirectUri });
     return reply.redirect(url);
   });
 

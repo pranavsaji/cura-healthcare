@@ -60,6 +60,14 @@ export const api = {
   devLogin: (role: string) =>
     req<{ ok: boolean; role: string }>("/auth/dev-login", { method: "POST", body: JSON.stringify({ role }) }),
   logout: () => req<{ ok: boolean }>("/auth/logout", { method: "POST" }),
+  /**
+   * Begin WorkOS AuthKit login. This is a full-page navigation (not fetch): the
+   * API redirects to the hosted login page, then back to /auth/callback, which
+   * sets the session cookie and returns the browser to the app.
+   */
+  beginSso: () => {
+    window.location.assign(`${API}/auth/login`);
+  },
 
   // templates + sessions
   templates: () => req<NoteTemplate[]>("/templates"),

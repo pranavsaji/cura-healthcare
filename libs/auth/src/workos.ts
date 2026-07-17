@@ -48,6 +48,12 @@ export interface WorkOSAuthProviderOptions {
   resolveOrgId(workosOrgId: string): Promise<string | null>;
   /** Role assigned when the directory/SSO profile carries none. */
   defaultRole?: Role;
+  /**
+   * Cura org to place users in when the AuthKit profile carries no WorkOS
+   * organization (e.g. plain email/password sign-ups with no org membership).
+   * Without this, an org-less login is rejected.
+   */
+  defaultOrgId?: string;
 }
 
 /**
@@ -71,10 +77,12 @@ export class WorkOSAuthProvider implements AuthProvider {
 
   async completeLogin(code: string): Promise<SessionSubject> {
     const profile = await this.opts.port.authenticateWithCode(code);
-    if (!profile.organizationId) {
-      throw new ProviderError("SSO profile is not associated with an organization");
-    }
-    const orgId = await this.opts.resolveOrgId(profile.organizationId);
+    // AuthKit users may authenticate without a WorkOS organization (email/
+    // password with no org membership). Map an org-bearing profile through the
+    // org directory; fall back to the configured default org otherwise.
+    const orgId = profile.organizationId
+      ? await this.opts.resolveOrgId(profile.organizationId)
+      : this.opts.defaultOrgId ?? null;
     if (!orgId) throw new ProviderError("Unknown organization for SSO login");
 
     const role = profile.role ?? this.defaultRole;
@@ -118,31 +126,44 @@ export class WorkOSAuthProvider implements AuthProvider {
 }
 
 /**
- * Real WorkOS network adapter (used in production; never exercised in unit
- * tests). Talks to the WorkOS REST API with the account's API key. Kept behind
- * {@link WorkOSPort} so no other layer depends on WorkOS wire details.
+ * Real WorkOS network adapter for AuthKit (User Management API). Used in
+ * production; never exercised in unit tests. The hosted AuthKit page handles
+ * email/password + social login, so no SAML/IdP connection is required. Kept
+ * behind {@link WorkOSPort} so no other layer depends on WorkOS wire details.
+ *
+ * - authorize: `GET /user_management/authorize?provider=authkit` → hosted login
+ * - authenticate: `POST /user_management/authenticate` (code → user + tokens)
  */
 export class HttpWorkOSPort implements WorkOSPort {
   constructor(
     private readonly apiKey: string,
+    private readonly clientId: string,
     private readonly baseUrl = "https://api.workos.com",
   ) {}
 
   authorizationUrl(opts: AuthorizationOptions & { clientId: string }): string {
-    const url = new URL("/sso/authorize", this.baseUrl);
+    const url = new URL("/user_management/authorize", this.baseUrl);
     url.searchParams.set("client_id", opts.clientId);
     url.searchParams.set("redirect_uri", opts.redirectUri);
     url.searchParams.set("response_type", "code");
+    // `authkit` routes to the hosted login page, which auto-detects the user's
+    // available auth methods (password, social, SSO) and picks the right flow.
+    url.searchParams.set("provider", "authkit");
     url.searchParams.set("state", opts.state);
-    if (opts.organizationId) url.searchParams.set("organization", opts.organizationId);
+    if (opts.organizationId) url.searchParams.set("organization_id", opts.organizationId);
     return url.toString();
   }
 
   async authenticateWithCode(code: string): Promise<WorkOSProfile> {
-    const res = await fetch(new URL("/sso/token", this.baseUrl), {
+    const res = await fetch(new URL("/user_management/authenticate", this.baseUrl), {
       method: "POST",
-      headers: { "content-type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ grant_type: "authorization_code", code, client_secret: this.apiKey }),
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        client_id: this.clientId,
+        client_secret: this.apiKey,
+        grant_type: "authorization_code",
+        code,
+      }),
     });
     if (!res.ok) {
       throw new ProviderError("WorkOS authentication failed", {
@@ -150,24 +171,25 @@ export class HttpWorkOSPort implements WorkOSPort {
       });
     }
     const data = (await res.json()) as {
-      profile?: {
+      user?: {
         id: string;
         email: string;
         first_name?: string | null;
         last_name?: string | null;
-        organization_id?: string | null;
-        role?: { slug?: string } | null;
       };
+      organization_id?: string | null;
+      role?: { slug?: string } | string | null;
     };
-    const p = data.profile;
-    if (!p) throw new ProviderError("WorkOS returned no profile");
-    const name = [p.first_name, p.last_name].filter(Boolean).join(" ") || p.email;
+    const u = data.user;
+    if (!u) throw new ProviderError("WorkOS returned no user");
+    const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || u.email;
+    const roleSlug = typeof data.role === "string" ? data.role : data.role?.slug;
     return {
-      userId: p.id,
-      email: p.email,
+      userId: u.id,
+      email: u.email,
       name,
-      organizationId: p.organization_id ?? null,
-      role: (p.role?.slug as Role | undefined) ?? null,
+      organizationId: data.organization_id ?? null,
+      role: (roleSlug as Role | undefined) ?? null,
     };
   }
 }

@@ -86,6 +86,18 @@ describe("SessionService", () => {
     expect(secure.toSetCookie(t)).toContain("Secure");
     expect(insecure.toSetCookie(t)).not.toContain("Secure");
   });
+
+  it("emits SameSite=None; Secure for cross-site cookies (Vercel ↔ Railway)", () => {
+    const clock = new FixedClock("2026-01-01T00:00:00.000Z");
+    // secureCookies deliberately false — None must force Secure on regardless.
+    const svc = new SessionService({ secret: SECRET, clock, sameSite: "none", secureCookies: false });
+    const t = svc.issue({ userId: "u", orgId: "o", role: "clinician" });
+    const setCookie = svc.toSetCookie(t);
+    expect(setCookie).toContain("SameSite=None");
+    expect(setCookie).toContain("Secure");
+    expect(svc.clearCookie()).toContain("SameSite=None");
+    expect(svc.clearCookie()).toContain("Secure");
+  });
 });
 
 describe("readBearer", () => {

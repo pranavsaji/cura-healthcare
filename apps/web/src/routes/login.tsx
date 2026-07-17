@@ -3,10 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { Button, Eyebrow, MotionReveal, Magnetic } from "@cura/ui";
 import { Logo } from "../components/Chrome.js";
 import { useAuth } from "../state/auth.js";
+import { api } from "../api.js";
+
+// Dev role shortcuts (keyless) are only useful when the API runs the dev auth
+// provider — i.e. local development. Production uses the WorkOS handoff.
+const DEV = import.meta.env.DEV;
 
 /**
- * Login. In production this is an SSO handoff (WorkOS); in dev we offer role
- * shortcuts so the whole app is usable keylessly. On success the router's guard
+ * Login. Production is a WorkOS AuthKit handoff (hosted email/password + social);
+ * local dev also offers keyless role shortcuts. On success the router's guard
  * lets the user into the app.
  */
 export function LoginRoute() {
@@ -37,19 +42,34 @@ export function LoginRoute() {
         </div>
         <div className="text-center">
           <Eyebrow>Sign in</Eyebrow>
-          <p className="mt-2 text-sm text-text-mid">Choose a role to enter the demo workspace.</p>
+          <p className="mt-2 text-sm text-text-mid">Sign in to your Cura workspace.</p>
         </div>
         <div className="space-y-3">
           <Magnetic strength={0.15} className="block w-full">
-            <Button className="w-full" disabled={busy} onClick={() => void signIn("clinician")}>
-              Continue as clinician
+            <Button className="w-full" disabled={busy} onClick={() => api.beginSso()}>
+              Sign in with WorkOS
             </Button>
           </Magnetic>
-          <Magnetic strength={0.15} className="block w-full">
-            <Button className="w-full" variant="outline" disabled={busy} onClick={() => void signIn("admin")}>
-              Continue as admin
-            </Button>
-          </Magnetic>
+
+          {DEV && (
+            <>
+              <div className="flex items-center gap-3 pt-1 text-2xs uppercase tracking-wide text-text-dim">
+                <span className="h-px flex-1 bg-line" />
+                dev shortcuts
+                <span className="h-px flex-1 bg-line" />
+              </div>
+              <Magnetic strength={0.15} className="block w-full">
+                <Button className="w-full" variant="outline" disabled={busy} onClick={() => void signIn("clinician")}>
+                  Continue as clinician
+                </Button>
+              </Magnetic>
+              <Magnetic strength={0.15} className="block w-full">
+                <Button className="w-full" variant="outline" disabled={busy} onClick={() => void signIn("admin")}>
+                  Continue as admin
+                </Button>
+              </Magnetic>
+            </>
+          )}
         </div>
       </MotionReveal>
     </div>

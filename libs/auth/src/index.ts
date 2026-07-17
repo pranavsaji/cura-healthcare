@@ -27,6 +27,8 @@ export interface CreateAuthServiceOptions {
   sessionTtlSeconds?: number;
   secureCookies?: boolean;
   cookieName?: string;
+  /** Cookie `SameSite`; use `none` for cross-site (Vercel web ↔ Railway API). */
+  sameSite?: "lax" | "none" | "strict";
 }
 
 /**
@@ -42,6 +44,7 @@ export function createAuthService(opts: CreateAuthServiceOptions): AuthService {
     ...(opts.sessionTtlSeconds ? { ttlSeconds: opts.sessionTtlSeconds } : {}),
     ...(opts.secureCookies !== undefined ? { secureCookies: opts.secureCookies } : {}),
     ...(opts.cookieName ? { cookieName: opts.cookieName } : {}),
+    ...(opts.sameSite ? { sameSite: opts.sameSite } : {}),
   });
   return new AuthService({
     sessions,

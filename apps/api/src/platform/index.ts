@@ -36,6 +36,12 @@ export interface PlatformSettings {
   rateLimitPerMin: number;
   secureCookies: boolean;
   sessionCookieName: string;
+  /**
+   * Absolute URL WorkOS redirects to after login (the API's own `/auth/callback`).
+   * Must be pre-registered in the WorkOS dashboard. Undefined in local dev, where
+   * the login route falls back to `${webOrigin}/auth/callback`.
+   */
+  authCallbackUrl?: string | undefined;
 }
 
 export interface ReadinessReport {

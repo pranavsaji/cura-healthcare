@@ -47,6 +47,13 @@ export interface SessionServiceOptions {
   cookieName?: string;
   /** Emit the `Secure` cookie flag (true in prod / behind TLS). */
   secureCookies?: boolean;
+  /**
+   * Cookie `SameSite` attribute. Default `lax`. Use `none` when the API and web
+   * app are on different sites (e.g. Vercel web ↔ Railway API) so the browser
+   * sends the session cookie on cross-site requests. `none` REQUIRES `Secure`,
+   * which is forced on automatically.
+   */
+  sameSite?: "lax" | "none" | "strict";
 }
 
 const HEADER = { alg: "HS256", typ: "JWT" } as const;
@@ -68,6 +75,7 @@ export class SessionService {
   private readonly ttl: number;
   readonly cookieName: string;
   private readonly secureCookies: boolean;
+  private readonly sameSite: "Lax" | "None" | "Strict";
 
   constructor(opts: SessionServiceOptions) {
     if (!opts.secret || opts.secret.length < 16) {
@@ -77,7 +85,10 @@ export class SessionService {
     this.clock = opts.clock ?? systemClock;
     this.ttl = opts.ttlSeconds ?? DEFAULT_TTL;
     this.cookieName = opts.cookieName ?? DEFAULT_COOKIE_NAME;
-    this.secureCookies = opts.secureCookies ?? false;
+    this.sameSite = ({ lax: "Lax", none: "None", strict: "Strict" } as const)[opts.sameSite ?? "lax"];
+    // SameSite=None is invalid without Secure — browsers drop such cookies — so
+    // Secure is implied whenever the caller opts into cross-site cookies.
+    this.secureCookies = (opts.secureCookies ?? false) || this.sameSite === "None";
   }
 
   private sign(signingInput: string): string {
@@ -133,14 +144,14 @@ export class SessionService {
     return parsed.data;
   }
 
-  /** `Set-Cookie` value that stores the session (HttpOnly, SameSite=Lax). */
+  /** `Set-Cookie` value that stores the session (HttpOnly, configured SameSite). */
   toSetCookie(token: string, maxAgeSeconds?: number): string {
     const maxAge = maxAgeSeconds ?? this.ttl;
     const flags = [
       `${this.cookieName}=${token}`,
       "Path=/",
       "HttpOnly",
-      "SameSite=Lax",
+      `SameSite=${this.sameSite}`,
       `Max-Age=${maxAge}`,
     ];
     if (this.secureCookies) flags.push("Secure");
@@ -149,7 +160,7 @@ export class SessionService {
 
   /** `Set-Cookie` value that clears the session (logout). */
   clearCookie(): string {
-    const flags = [`${this.cookieName}=`, "Path=/", "HttpOnly", "SameSite=Lax", "Max-Age=0"];
+    const flags = [`${this.cookieName}=`, "Path=/", "HttpOnly", `SameSite=${this.sameSite}`, "Max-Age=0"];
     if (this.secureCookies) flags.push("Secure");
     return flags.join("; ");
   }

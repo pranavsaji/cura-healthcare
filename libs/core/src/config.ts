@@ -17,6 +17,13 @@ const ConfigSchema = z
     // Networking
     API_PORT: z.coerce.number().int().positive().default(4100),
     WEB_ORIGIN: z.string().url().default("http://localhost:5173"),
+    // Set `true` when the web app and API are on different sites (e.g. Vercel web
+    // ↔ Railway API) so the session cookie is issued `SameSite=None; Secure` and
+    // survives cross-site requests. Left `false` for same-origin/local dev.
+    CROSS_SITE_COOKIES: z
+      .enum(["true", "false"])
+      .default("false")
+      .transform((v) => v === "true"),
 
     // Data stores (optional → in-memory/dev; required for prod wiring)
     DATABASE_URL: z.string().url().optional(),

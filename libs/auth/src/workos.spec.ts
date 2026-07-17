@@ -107,7 +107,7 @@ describe("WorkOSAuthProvider", () => {
     expect(subject.role).toBe("clinician"); // default
   });
 
-  it("rejects a profile with no organization", async () => {
+  it("rejects a profile with no organization when no default org is set", async () => {
     const { provider } = makeProvider({
       userId: "wu3",
       email: "c@x.com",
@@ -116,6 +116,29 @@ describe("WorkOSAuthProvider", () => {
       role: null,
     });
     await expect(provider.completeLogin("code")).rejects.toBeInstanceOf(ProviderError);
+  });
+
+  it("places an org-less AuthKit user into the configured default org", async () => {
+    const dir = fakeDirectory();
+    const provider = new WorkOSAuthProvider({
+      port: {
+        authorizationUrl: (o) => `https://idp?client_id=${o.clientId}`,
+        authenticateWithCode: async () => ({
+          userId: "wu4",
+          email: "d@x.com",
+          name: "D",
+          organizationId: null,
+          role: null,
+        }),
+      },
+      directory: dir,
+      clientId: "client_1",
+      resolveOrgId: async () => null,
+      defaultOrgId: "seed_org",
+    });
+    const subject = await provider.completeLogin("code");
+    expect(subject).toEqual({ userId: "user_1", orgId: "seed_org", role: "clinician" });
+    expect(dir.rows.size).toBe(1);
   });
 
   it("rejects an unmapped organization", async () => {
@@ -159,8 +182,8 @@ describe("AuthProvider contract", () => {
 describe("HttpWorkOSPort", () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it("builds a spec-shaped authorization URL", () => {
-    const port = new HttpWorkOSPort("sk_test");
+  it("builds an AuthKit authorization URL", () => {
+    const port = new HttpWorkOSPort("sk_test", "client_1");
     const url = port.authorizationUrl({
       clientId: "client_1",
       state: "s",
@@ -169,30 +192,25 @@ describe("HttpWorkOSPort", () => {
     });
     const parsed = new URL(url);
     expect(parsed.origin).toBe("https://api.workos.com");
+    expect(parsed.pathname).toBe("/user_management/authorize");
     expect(parsed.searchParams.get("client_id")).toBe("client_1");
     expect(parsed.searchParams.get("redirect_uri")).toBe("https://app/cb");
-    expect(parsed.searchParams.get("organization")).toBe("org_1");
+    expect(parsed.searchParams.get("provider")).toBe("authkit");
+    expect(parsed.searchParams.get("organization_id")).toBe("org_1");
     expect(parsed.searchParams.get("response_type")).toBe("code");
   });
 
-  it("maps a successful token response to a profile", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn(async () => ({
-        ok: true,
-        json: async () => ({
-          profile: {
-            id: "wu_1",
-            email: "a@x.com",
-            first_name: "Sam",
-            last_name: "Rivera",
-            organization_id: "workos_org_1",
-            role: { slug: "clinician" },
-          },
-        }),
-      })),
-    );
-    const port = new HttpWorkOSPort("sk_test");
+  it("maps a successful authenticate response to a profile", async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        user: { id: "wu_1", email: "a@x.com", first_name: "Sam", last_name: "Rivera" },
+        organization_id: "workos_org_1",
+        role: { slug: "clinician" },
+      }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+    const port = new HttpWorkOSPort("sk_test", "client_1");
     const profile = await port.authenticateWithCode("code_1");
     expect(profile).toEqual({
       userId: "wu_1",
@@ -201,17 +219,45 @@ describe("HttpWorkOSPort", () => {
       organizationId: "workos_org_1",
       role: "clinician",
     });
+    // Hits the User Management authenticate endpoint with the code + credentials.
+    const [calledUrl, init] = fetchMock.mock.calls[0] as unknown as [unknown, { body: string }];
+    expect(String(calledUrl)).toContain("/user_management/authenticate");
+    expect(JSON.parse(init.body)).toMatchObject({
+      client_id: "client_1",
+      client_secret: "sk_test",
+      grant_type: "authorization_code",
+      code: "code_1",
+    });
+  });
+
+  it("maps an org-less AuthKit profile (email/password) with a null organization", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ user: { id: "wu_2", email: "b@x.com", first_name: "Lee" } }),
+      })),
+    );
+    const port = new HttpWorkOSPort("sk_test", "client_1");
+    const profile = await port.authenticateWithCode("code_2");
+    expect(profile).toEqual({
+      userId: "wu_2",
+      email: "b@x.com",
+      name: "Lee",
+      organizationId: null,
+      role: null,
+    });
   });
 
   it("throws a ProviderError on a non-OK response", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 401, json: async () => ({}) })));
-    const port = new HttpWorkOSPort("sk_test");
+    const port = new HttpWorkOSPort("sk_test", "client_1");
     await expect(port.authenticateWithCode("bad")).rejects.toBeInstanceOf(ProviderError);
   });
 
-  it("throws when the response carries no profile", async () => {
+  it("throws when the response carries no user", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({}) })));
-    const port = new HttpWorkOSPort("sk_test");
+    const port = new HttpWorkOSPort("sk_test", "client_1");
     await expect(port.authenticateWithCode("x")).rejects.toBeInstanceOf(ProviderError);
   });
 });
