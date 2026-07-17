@@ -1,0 +1,19 @@
+# Keep the build context small & reproducible: never ship local installs,
+# build outputs, secrets, or VCS/tooling state into the image.
+**/node_modules
+**/dist
+**/.next
+**/.nx
+**/coverage
+**/test-results
+**/playwright-report
+**/.vercel
+**/.turbo
+.git
+.github
+**/*.log
+.env
+.env.*
+!.env.example
+**/.DS_Store
+apps/api/.uploads

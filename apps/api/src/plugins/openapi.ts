@@ -27,7 +27,13 @@ export const openapiPlugin = fp(
       transform: jsonSchemaTransform,
     });
 
-    await app.register(swaggerUi, { routePrefix: "/docs" });
+    // The Swagger UI serves bundled static assets via `__dirname`, which breaks
+    // when the server is esbuild-bundled into a single file for production. The
+    // machine-readable spec (`/openapi.json`) is always available; the human UI
+    // at `/docs` is a dev/staging convenience only.
+    if (process.env.NODE_ENV !== "production") {
+      await app.register(swaggerUi, { routePrefix: "/docs" });
+    }
 
     app.get("/openapi.json", { schema: { hide: true }, config: { public: true } }, async () =>
       app.swagger(),

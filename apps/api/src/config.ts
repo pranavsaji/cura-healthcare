@@ -21,6 +21,10 @@ export function resolveConfig(env: NodeJS.ProcessEnv = process.env): Config {
   for (const key of Object.keys(raw)) {
     if (raw[key] === "") raw[key] = undefined;
   }
+  // PaaS hosts (Railway, Render, Fly, Heroku) inject the listening port as
+  // `PORT`; honor it when `API_PORT` isn't set explicitly so the container
+  // binds the address the platform routes to.
+  raw.API_PORT ??= raw.PORT;
   if (raw.NODE_ENV !== "production") {
     raw.ENCRYPTION_KEY ??= "dev-only-encryption-key-change-me-32b";
     raw.SESSION_SECRET ??= "dev-only-session-secret-change-me-32b";
